@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <parent>
         <groupId>com.springforge</groupId>
         <artifactId>springforge-parent</artifactId>
@@ -13,12 +13,33 @@
     <artifactId>springforge-codegen</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.springforge</groupId>
+            <artifactId>springforge-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jasypt</groupId>
+            <artifactId>jasypt</artifactId>
+            <version>1.9.3</version>
+        </dependency>
         <!-- JAXB pour le parsing XML -->
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-jpa</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
         <!-- Utilitaires -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -34,6 +55,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
+
+
     </dependencies>
 
 </project>

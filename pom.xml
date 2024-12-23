@@ -16,6 +16,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>springforge-common</module>
         <module>springforge-codegen</module>
         <module>springforge-core</module>
         <module>springforge-web</module>
@@ -38,6 +39,11 @@
     <dependencyManagement>
         <dependencies>
             <!-- Modules internes -->
+            <dependency>
+                <groupId>com.springforge</groupId>
+                <artifactId>springforge-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.springforge</groupId>
                 <artifactId>springforge-codegen</artifactId>
