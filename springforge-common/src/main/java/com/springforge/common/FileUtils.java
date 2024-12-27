@@ -7,6 +7,9 @@ import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import com.google.common.base.Preconditions;
+import com.springforge.common.FileUtils.DirCleaner;
+import com.springforge.common.FileUtils.DirCopier;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -186,14 +189,14 @@ public final class FileUtils {
    * Sanitizes a filename, replacing with dash
    *
    * <ul>
-   *   <li>Removes special characters that are illegal in filenames on certain operating systems
-   *   <li>Replaces spaces and consecutive underscore with a single dash
+   *   <li>Removes special characters that are illegal in filenames on certain operating systems</li>
+   *   <li>Replaces spaces and consecutive underscore with a single dash</li>
    *   <li>Trims dot, dash and underscore from beginning and end of filename (with and without the
-   *       extension part)
-   *       <ul>
+   *       extension part)</li>
+   * </ul>
    *
    * @param originalFileName The filename to be sanitized
-   * @return string The sanitized filename
+   * @return string The sanitized filename 
    */
   public static String safeFileName(String originalFileName) {
     if (StringUtils.isEmpty(originalFileName)) {

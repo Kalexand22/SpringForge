@@ -1,4 +1,3 @@
-
 package com.springforge.common.reflections;
 
 import com.google.common.reflect.ClassPath;
@@ -15,6 +14,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -169,12 +170,11 @@ final class ClassScanner {
     }
 
     final URL resource = info.url();
-    boolean matched =
-        pathPatterns.isEmpty()
-            || pathPatterns.stream()
-                .map(p -> p.matcher(resource.getFile()).matches())
-                .findFirst()
-                .orElse(false);
+    boolean matched = pathPatterns.isEmpty() || 
+    pathPatterns.stream()
+        .map(p -> p.matcher(resource.toString()).matches())  // Use toString() instead of getFile()
+        .findFirst()
+        .orElse(true);
 
     if (!matched) {
       return;
