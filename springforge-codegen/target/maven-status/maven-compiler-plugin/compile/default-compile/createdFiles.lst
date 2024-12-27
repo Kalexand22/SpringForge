@@ -1,9 +1,0 @@
-com\springforge\codegen\changelog\ReleaseGenerator.class
-com\springforge\codegen\code\entity\model\Overridable.class
-com\springforge\codegen\code\entity\model\package-info.class
-com\springforge\codegen\code\entity\model\DefaultOverridable.class
-com\springforge\codegen\code\entity\EntityGenerator.class
-com\springforge\codegen\changelog\ReleaseGenerator$EntryDescriptionGenerator.class
-META-INF\spring-configuration-metadata.json
-com\springforge\codegen\code\entity\EntityGenerator$1.class
-com\springforge\codegen\code\JavaFile.class
