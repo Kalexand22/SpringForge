@@ -1,4 +1,3 @@
-
 package com.springforge.common.crypto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
