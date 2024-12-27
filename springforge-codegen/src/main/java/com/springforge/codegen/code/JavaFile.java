@@ -72,4 +72,12 @@ public class JavaFile {
     JavaWriter header = new JavaWriter(javaContext, " ").emit(javaContext);
     output.append(formatter.apply(header.toString() + writer.toString()));
   }
+
+  public String getPackageName() {
+    return javaContext.getPackageName();
+  }
+
+  public JavaType getType() {
+    return javaType;
+  }
 }

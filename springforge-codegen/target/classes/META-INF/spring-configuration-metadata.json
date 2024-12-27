@@ -1,0 +1,11 @@
+{
+  "groups": [
+    {
+      "name": "springforge.codegen",
+      "type": "com.springforge.codegen.code.entity.EntityGenerator",
+      "sourceType": "com.springforge.codegen.code.entity.EntityGenerator"
+    }
+  ],
+  "properties": [],
+  "hints": []
+}

@@ -49,6 +49,12 @@
             <version>${tika.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jasypt</groupId>
+            <artifactId>jasypt</artifactId>
+            <version>1.9.3</version>
+        </dependency>
+
         <!-- XML -->
         <dependency>
             <groupId>jakarta.xml.bind</groupId>

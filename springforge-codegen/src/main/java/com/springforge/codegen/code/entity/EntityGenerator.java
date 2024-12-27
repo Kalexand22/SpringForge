@@ -17,12 +17,15 @@ import org.springframework.stereotype.Component;
 
 import jakarta.xml.bind.JAXBException;
 import java.io.*;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static com.springforge.codegen.code.entity.model.PropertyType.*;
 
 @Component
 @ConfigurationProperties(prefix = "springforge.codegen")
@@ -74,7 +77,7 @@ public class EntityGenerator {
   private JavaType generateRepository(Entity entity) {
     String repoPackage = entity.getRepoPackage();
     String entityName = entity.getName();
-    Property.PropertyType idType = entity.getIdType();
+    PropertyType idType = entity.getIdType();
 
     // Conversion de PropertyType vers le type Java correspondant
     String idTypeStr = "Long"; // Type par défaut
@@ -106,7 +109,7 @@ public class EntityGenerator {
 
     // Add custom query methods based on unique fields
     entity.getFields().stream()
-            .filter(Property::isUnique)
+            .filter(Property::getUnique)
             .forEach(field -> {
               String methodName = "findBy" + capitalize(field.getName());
               String returnType = entityName;
@@ -124,12 +127,14 @@ public class EntityGenerator {
   private JavaType generateService(Entity entity) {
     String servicePackage = entity.getPackageName() + ".service";
     String entityName = entity.getName();
+    PropertyType idType = entity.getIdType();
+
+    String idTypeStr = convertPropertyTypeToJava(idType);
 
     JavaType serviceType = JavaType.newClass(entityName + "Service");
     serviceType.annotation(new JavaAnnotation("@org.springframework.stereotype.Service"));
     serviceType.annotation(new JavaAnnotation("@org.springframework.transaction.annotation.Transactional"));
 
-    // Add repository dependency
     String repoField = lcFirst(entityName) + "Repository";
     JavaField repositoryField = new JavaField(repoField, entityName + "Repository", Modifier.PRIVATE | Modifier.FINAL);
     serviceType.field(repositoryField);
@@ -141,31 +146,52 @@ public class EntityGenerator {
     constructor.code("this." + repoField + " = " + repoField + ";");
     serviceType.method(constructor);
 
-    // Save method
+    // CRUD methods
     JavaMethod saveMethod = new JavaMethod("save", entityName, Modifier.PUBLIC);
     saveMethod.param("entity", entityName);
     saveMethod.code("return " + repoField + ".save(entity);");
     serviceType.method(saveMethod);
 
-    // FindById method
     JavaMethod findByIdMethod = new JavaMethod("findById", "Optional<" + entityName + ">", Modifier.PUBLIC);
-    Property.PropertyType idType = entity.getIdType();
-    findByIdMethod.param("id", idType.getJavaType());
+    findByIdMethod.param("id", idTypeStr);
     findByIdMethod.code("return " + repoField + ".findById(id);");
     serviceType.method(findByIdMethod);
 
-    // FindAll method
     JavaMethod findAllMethod = new JavaMethod("findAll", "List<" + entityName + ">", Modifier.PUBLIC);
     findAllMethod.code("return " + repoField + ".findAll();");
     serviceType.method(findAllMethod);
 
-    // Delete method
     JavaMethod deleteMethod = new JavaMethod("delete", "void", Modifier.PUBLIC);
     deleteMethod.param("entity", entityName);
     deleteMethod.code(repoField + ".delete(entity);");
     serviceType.method(deleteMethod);
 
     return serviceType;
+  }
+
+  private String convertPropertyTypeToJava(PropertyType type) {
+    if (type == null) return "Long";
+
+    switch (type) {
+      case STRING:
+        return "String";
+      case INTEGER:
+        return "Integer";
+      case LONG:
+        return "Long";
+      case BOOLEAN:
+        return "Boolean";
+      case DECIMAL:
+        return "java.math.BigDecimal";
+      case DATE:
+        return "java.time.LocalDate";
+      case TIME:
+        return "java.time.LocalTime";
+      case DATETIME:
+        return "java.time.LocalDateTime";
+      default:
+        return "Long";
+    }
   }
 
   // Modified render method to generate additional Spring components
@@ -342,6 +368,91 @@ public class EntityGenerator {
                 log.info("Deleting obsolete file: {}", f);
                 f.delete();
               });
+    }
+  }
+
+  protected void process(File input, boolean doLookup) throws IOException {
+    final List<BaseType<?>> types;
+    try {
+      types = EntityParser.parse(input);
+    } catch (JAXBException e) {
+      throw new RuntimeException(e);
+    }
+
+    for (BaseType<?> type : types) {
+      if (type instanceof EnumType) {
+        enums.put(type.getName(), (EnumType) type);
+      } else if (type instanceof Entity) {
+        entities.put(type.getName(), (Entity) type);
+      }
+    }
+  }
+
+  protected File save(JavaFile file) throws IOException {
+    File dir = new File(outputPath, file.getPackageName().replace('.', '/'));
+    dir.mkdirs();
+
+    File output = new File(dir, file.getType().getName() + ".java");
+    writeTo(output, file);
+    return output;
+  }
+
+  protected List<File> renderEnum(Collection<EnumType> items, boolean doLookup) throws IOException {
+    if (items == null || items.isEmpty()) {
+      return null;
+    }
+
+    final List<EnumType> all = new ArrayList<>(items);
+    final EnumType first = all.get(0);
+    final String ns = first.getPackageName();
+    final String name = first.getName();
+
+    // Handle lookup enums
+    if (doLookup) {
+      for (EntityGenerator gen : lookup) {
+        if (gen.definedEnums.contains(name)) {
+          if (gen.enums.isEmpty()) {
+            gen.processAll(false);
+          }
+          all.addAll(0, gen.enums.get(name));
+        }
+      }
+    }
+
+    // Validate namespace consistency
+    for (EnumType it : all) {
+      if (!ns.equals(it.getPackageName())) {
+        throw new IllegalArgumentException(
+                String.format(
+                        "Invalid namespace: %s.%s != %s.%s",
+                        ns, name, it.getPackageName(), name));
+      }
+    }
+
+    final EnumType enumType = all.remove(0);
+    for (EnumType it : all) {
+      enumType.merge(it);
+    }
+
+    final List<File> rendered = new ArrayList<>();
+    JavaType javaType = enumType.toJavaClass();
+    if (javaType != null) {
+      rendered.add(save(new JavaFile(enumType.getPackageName(), javaType)));
+    }
+
+    return rendered;
+  }
+
+  public void processAll(boolean doLookup) throws IOException {
+    if (domainPath == null || !domainPath.exists()) {
+      return;
+    }
+
+    File[] files = domainPath.listFiles((dir, name) -> name.endsWith(".xml"));
+    if (files != null) {
+      for (File file : files) {
+        process(file, doLookup);
+      }
     }
   }
 }
